@@ -1,5 +1,8 @@
 #include <iostream>
 #include <utility>
+#include <exception>
+#include <random>
+#include <cmath>
 
 template <typename K, typename E>
 class Dictionary
@@ -30,10 +33,30 @@ class BST : public Dictionary<K, E>
 {
 private:
 	TreeNode<std::pair<K, E>>* root;
+	int height;
 
 public:
-	BST() : root(nullptr)
+	BST() : root(nullptr), height(0)
 	{}
+
+	int GetHeight()
+	{
+		SetHeight(0, root);
+		return height;
+	}
+
+	void SetHeight(int h, TreeNode<std::pair<K,E>>* r)
+	{
+		if (r)
+		{
+			h++;
+			SetHeight(h, r->left);
+			SetHeight(h, r->right);
+		}
+
+		if (height < h)
+			height = h;
+	}
 
 	virtual bool IsEmpty() const
 	{
@@ -51,10 +74,8 @@ public:
 	virtual std::pair<K, E>* Get(const K& k)
 	{
 		TreeNode<std::pair<K, E>>* c = getNode(root, k);
-		if (c != nullptr)
-			return &(c->data);
-		else
-			return nullptr;
+		if (!c) throw "Key Error";
+		return &(c->data);
 	}
 
 	virtual void Insert(const std::pair<K, E>& thePair)
@@ -230,6 +251,18 @@ public:
 		mid = nullptr;
 		return;
 	}
+
+	E& operator[](const K& k)
+	{
+		try {
+			return Get(k)->second;
+		}
+		catch (const char*)
+		{
+			Insert(std::pair<K, E>(k, NULL));
+			return Get(k)->second;
+		}
+	}
 };
 
 
@@ -238,42 +271,19 @@ int main()
 {
 	using namespace std;
 	BST<int, int> bst;
+	std::random_device rd;
 
-	pair<int, int> p;
-	p.first = 30;
-	p.second = 1;
-	bst.Insert(p);
-	
-	p.first = 5;
-	p.second = 1;
-	bst.Insert(p);
+	int n = 10000;
+	std::mt19937 gen(rd());
 
-	p.first = 2;
-	p.second = 1;
-	bst.Insert(p);
+	std::uniform_int_distribution<int> dis(0, 200000);
 
-	p.first = 40;
-	p.second = 1;
-	bst.Insert(p);
+	for (int i = 0; i < n; i++)
+	{
+		bst[dis(gen)] = i;
+	}
 
-	p.first = 80;
-	p.second = 2;
-	bst.Insert(p);
+	std::cout << "res: " << bst.GetHeight() / log2(n);
 
-	p.first = 35;
-	p.second = 3;
-	bst.Insert(p);
-
-	bst.Inorder();
-	bst.Preorder();
-
-	BST<int, int> s, b;
-	pair<int, int>* mid;
-
-	bst.Split(40, s, mid, b);
-
-	s.Inorder();
-	b.Inorder();
-	cout << mid->first;
 	return 0;
 }
