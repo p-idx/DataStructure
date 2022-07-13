@@ -40,17 +40,21 @@ public:
 		return root ? false : true;
 	}
 
-	std::pair<K, E>* Get(TreeNode <std::pair<K, E>>* p, const K& k)
+	TreeNode<std::pair<K, E>>* getNode(TreeNode <std::pair<K, E>>* p, const K& k)
 	{
 		if (!p) return nullptr;
-		else if (k < p->data.first) return Get(p->left, k);
-		else if (k > p->data.first) return Get(p->right, k);
-		return &(p->data);
+		else if (k < p->data.first) return getNode(p->left, k);
+		else if (k > p->data.first) return getNode(p->right, k);
+		return p;
 	}
 
 	virtual std::pair<K, E>* Get(const K& k)
 	{
-		return Get(root, k);
+		TreeNode<std::pair<K, E>>* c = getNode(root, k);
+		if (c != nullptr)
+			return &(c->data);
+		else
+			return nullptr;
 	}
 
 	virtual void Insert(const std::pair<K, E>& thePair)
@@ -80,9 +84,73 @@ public:
 			root = p;
 	}
 
-	virtual void Delete(const K&)
+	virtual void Delete(const K& k)
 	{
+		TreeNode<std::pair<K, E>>* p = root, * pp = nullptr;
+		bool isLeftChild = false;
+		while (p)
+		{
+			if (k < p->data.first)
+			{
+				pp = p;
+				p = p->left;
+				isLeftChild = true;
+			}
+			else if (k > p->data.first)
+			{
+				pp = p;
+				p = p->right;
+				isLeftChild = false;
+			}
+			else break;
+		}
 
+		if (!p) throw "Key Error";
+
+		// p의 양쪽에 모두 자식이 있을 경우 **왼쪽으로 복사하면서 내려감
+		while (p->left != nullptr && p->right != nullptr)
+		{
+			p->data = p->left->data; // 랭크를 통해 더 좋은 트리로
+			pp = p;
+			isLeftChild = true;
+			p = p->left;
+		}
+		// p의 자식이 없을 경우
+		if (p->left == nullptr && p->right == nullptr)
+		{
+			if (pp) // 부모가 있을 경우 = 삭제노드가 루트가 아닌 경우
+			{
+				if (isLeftChild) {
+					pp->left = nullptr;
+					std::cout << pp->data.first;
+				}
+				else
+					pp->right = nullptr;
+			}
+			delete p;
+		}
+		else if (p->left != nullptr && p->right == nullptr) // p의 자식이 왼쪽에만 있을 경우
+		{
+			if (pp) // 부모가 있을 경우 = 삭제노드가 루트가 아닌 경우
+			{
+				if (isLeftChild)
+					pp->left = p->left;
+				else
+					pp->right = p->left;
+			}
+			delete p;
+		}
+		else if (p->left == nullptr && p->right != nullptr) // p의 자식이 오른쪽에만 있을 경우
+		{
+			if (pp) // 부모가 있을 경우 = 삭제노드가 루트가 아닌 경우
+			{
+				if (isLeftChild)
+					pp->left = p->right;
+				else
+					pp->right = p->right;
+			}
+			delete p;
+		}
 	}
 
 	void Inorder()
@@ -142,13 +210,20 @@ int main()
 	bst.Insert(p);
 
 	p.first = 80;
-	p.second = 1;
+	p.second = 2;
 	bst.Insert(p);
 
 	p.first = 35;
-	p.second = 1;
+	p.second = 3;
 	bst.Insert(p);
 
+
+	bst.Inorder();
+	bst.Preorder();
+
+	std::cout << bst.Get(35)->second << std::endl;
+
+	bst.Delete(80);
 
 	bst.Inorder();
 	bst.Preorder();
