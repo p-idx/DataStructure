@@ -184,8 +184,55 @@ public:
 			Preorder(node->right);
 		}
 	}
+	
+	void Split(const K& k, BST<K, E>& small, std::pair<K, E>*& mid, BST<K, E>& big)
+	{
+		if (!root) { small.root = big.root = nullptr; return; }
 
+		TreeNode<std::pair<K, E>>* sHead = new TreeNode<std::pair<K, E>>,
+			* s = sHead,
+			* bHead = new TreeNode<std::pair<K, E>>,
+			* b = bHead,
+			* current = root;
+
+		while (current)
+		{
+			if (k < current->data.first)
+			{
+				b->left = current;
+				b = current;
+				current = current->left;
+			}
+			else if (k > current->data.first)
+			{
+				s->right = current;
+				s = current;
+				current = current->right;
+			}
+			else // split
+			{
+				s->right = current->left;
+				b->left = current->right;
+				small.root = sHead->right;
+				delete sHead;
+				big.root = bHead->left;
+				delete bHead;
+				mid = new std::pair<K, E>(current->data.first, current->data.second);
+				delete current;
+				return;
+			}
+		}
+		s->right = b->left = nullptr;
+		small.root = sHead->right;
+		delete sHead;
+		big.root = bHead->left;
+		delete bHead;
+		mid = nullptr;
+		return;
+	}
 };
+
+
 
 int main()
 {
@@ -217,16 +264,16 @@ int main()
 	p.second = 3;
 	bst.Insert(p);
 
-
 	bst.Inorder();
 	bst.Preorder();
 
-	std::cout << bst.Get(35)->second << std::endl;
+	BST<int, int> s, b;
+	pair<int, int>* mid;
 
-	bst.Delete(80);
+	bst.Split(40, s, mid, b);
 
-	bst.Inorder();
-	bst.Preorder();
-
+	s.Inorder();
+	b.Inorder();
+	cout << mid->first;
 	return 0;
 }
